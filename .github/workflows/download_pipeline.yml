@@ -63,7 +63,7 @@ jobs:
           --outdir ./${{ env.REPOTITLE_LOWERCASE }} \
           --compress "none" \
           --container-system 'singularity' \
-          --container-library "quay.io" -l "docker.io" -l "ghcr.io" \
+          --container-library "quay.io" -l "docker.1ms.run" -l "ghcr.1ms.run" \
           --container-cache-utilisation 'amend' \
           --download-configuration
 
