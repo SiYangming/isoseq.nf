@@ -1,2 +1,4 @@
 sample,bam,pbi
 alz,testdata/alz.ccs.bam,None
+sample,bam,pbi
+alz,testdata/alz.ccs.bam,None
