@@ -10,3 +10,4 @@ testing*
 .idea/
 .vscode
 /testdata_resuts
+/nextflow_work
