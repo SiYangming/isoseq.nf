@@ -9,3 +9,4 @@ testing*
 *.pyc
 .idea/
 .vscode
+/testdata_resuts
