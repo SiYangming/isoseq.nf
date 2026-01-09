@@ -1,6 +1,6 @@
 {
     "name": "nfcore",
-    "image": "nfcore/gitpod:latest",
+    "image": "docker.1ms.run/nfcore/gitpod:latest",
     "remoteUser": "gitpod",
     "runArgs": ["--privileged"],
 

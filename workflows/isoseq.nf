@@ -44,6 +44,7 @@ include { SET_VALUE_CHANNEL as SET_PRIMERS_CHANNEL } from '../subworkflows/local
 // MODULE: Local to the pipeline
 //
 include { GSTAMA_FILELIST } from '../modules/local/gstama/filelist/main'
+include { PICARD_FILENAME }  from '../modules/local/picard/filename/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,8 +55,9 @@ include { GSTAMA_FILELIST } from '../modules/local/gstama/filelist/main'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { PBCCS }                       from '../modules/nf-core/pbccs/main'
-include { LIMA }                        from '../modules/nf-core/lima/main'
+include { PBCCS }                            from '../modules/nf-core/pbccs/main'
+include { PICARD_SPLITSAMBYNUMBEROFREADS }   from '../modules/nf-core/picard/splitsambynumberofreads/main'
+include { LIMA }                             from '../modules/nf-core/lima/main'
 include { ISOSEQ_REFINE }               from '../modules/nf-core/isoseq/refine/main'
 include { BAMTOOLS_CONVERT }            from '../modules/nf-core/bamtools/convert/main'
 include { GSTAMA_POLYACLEANUP }         from '../modules/nf-core/gstama/polyacleanup/main'
@@ -66,7 +68,7 @@ include { ULTRA_INDEX }                 from '../modules/nf-core/ultra/index/mai
 include { ULTRA_ALIGN }                 from '../modules/nf-core/ultra/align/main'
 include { GSTAMA_COLLAPSE }             from '../modules/nf-core/gstama/collapse/main'
 include { GSTAMA_MERGE }                from '../modules/nf-core/gstama/merge/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main' addParams( options: [publish_files : ['_versions.yml':'']] )
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,8 +123,44 @@ workflow ISOSEQ {
     }
 
 
+// LIMA pipeline entrypoint ##################################################################
+    if (params.entrypoint == "lima") {
+
+        // Split CCS BAM files using Picard
+        PICARD_SPLITSAMBYNUMBEROFREADS(
+            ch_samplesheet,                  // Input: CCS BAM files
+            [ [:], [], [] ],                 // No reference needed
+            Channel.value(0),                // split_to_N_reads (not used)
+            Channel.value(params.chunk),     // split_to_N_files
+            []                               // No arguments file
+        )
+
+        // Rename split BAM files to match LIMA input format
+        PICARD_FILENAME(PICARD_SPLITSAMBYNUMBEROFREADS.out.bam)
+
+        // Flatten the renamed BAM files and update meta
+        PICARD_FILENAME.out.bam
+        .transpose()
+        .map {
+            def chk       = (it[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
+            def id_former = it[0].id
+            def id_new    = it[0].id + "." + chk
+            return [ [id:id_new, id_former:id_former, single_end:true], it[1] ]
+        }
+        .set { ch_lima_bam_updated }
+
+        LIMA(ch_lima_bam_updated, SET_PRIMERS_CHANNEL.out.data)    // Remove primers from CCS
+        ISOSEQ_REFINE(LIMA.out.bam, SET_PRIMERS_CHANNEL.out.data)  // Discard CCS without polyA tails, remove it from the other
+        BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)                    // Convert bam to fasta
+        GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)             // Clean polyA tails from reads
+    }
+
+
 // MAP pipeline entrypoint ##################################################################
     if (params.entrypoint == "isoseq") {
+        ch_reads_to_map = GSTAMA_POLYACLEANUP.out.fasta
+    }
+    else if (params.entrypoint == "lima") {
         ch_reads_to_map = GSTAMA_POLYACLEANUP.out.fasta
     }
     else if (params.entrypoint == "map") {
@@ -179,6 +217,15 @@ workflow ISOSEQ {
         ch_versions = ch_versions.mix(GSTAMA_POLYACLEANUP.out.versions)
     }
 
+    if (params.entrypoint == "lima") {
+        ch_versions = ch_versions.mix(PICARD_SPLITSAMBYNUMBEROFREADS.out.versions)
+        ch_versions = ch_versions.mix(PICARD_FILENAME.out.versions)
+        ch_versions = ch_versions.mix(LIMA.out.versions)
+        ch_versions = ch_versions.mix(ISOSEQ_REFINE.out.versions)
+        ch_versions = ch_versions.mix(BAMTOOLS_CONVERT.out.versions)
+        ch_versions = ch_versions.mix(GSTAMA_POLYACLEANUP.out.versions)
+    }
+
     if (params.aligner == "ultra") {
         ch_versions = ch_versions.mix(GNU_SORT.out.versions)
         ch_versions = ch_versions.mix(ULTRA_INDEX.out.versions)
@@ -220,6 +267,11 @@ workflow ISOSEQ {
     // ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
     if (params.entrypoint == "isoseq") {
         ch_multiqc_files = ch_multiqc_files.mix(PBCCS.out.report_json.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.summary.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.counts.collect{it[1]}.ifEmpty([]))
+    }
+
+    if (params.entrypoint == "lima") {
         ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.summary.collect{it[1]}.ifEmpty([]))
         ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.counts.collect{it[1]}.ifEmpty([]))
     }

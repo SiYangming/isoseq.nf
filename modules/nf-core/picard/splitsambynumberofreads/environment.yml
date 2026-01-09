@@ -1,0 +1,9 @@
+name: picard_splitsambynumberofreads
+
+name: minimap2_alignchannels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - bioconda::picard=3.4.0

@@ -44,10 +44,10 @@
                 "entrypoint": {
                     "type": "string",
                     "fa_icon": "fas fa-dungeon",
-                    "description": "Run complete pipeline or TAMA only?",
-                    "enum": ["isoseq", "map"],
+                    "description": "Run complete pipeline, start from LIMA, or TAMA only?",
+                    "enum": ["isoseq", "lima", "map"],
                     "default": "isoseq",
-                    "help_text": "If you don't have the subreads sequences, because of the provider or last PacBio sequencer or because you used Oxford Nanopore, you'll to run the pipeline from the mapping step to advantage of the TAMA processing. \nThis option allows you to change the entry point from subread (--entrypoint isoseq) processing to mapping (--entrypoint map). "
+                    "help_text": "Choose the pipeline entry point:\n- 'isoseq' (default): Full pipeline starting from subreads (PBCCS -> LIMA -> ISOSEQ_REFINE -> mapping -> TAMA)\n- 'lima': Start from CCS BAM files, split with Picard, then run LIMA -> ISOSEQ_REFINE -> mapping -> TAMA\n- 'map': Start from the mapping step to take advantage of TAMA processing only"
                 },
                 "chunk": {
                     "type": "integer",
