@@ -3,6 +3,43 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.0.0 - Yangming Si [10/01/2026]
+
+Implement LIMA entrypoint and fix various bugs.
+
+### `Added`
+
+- **New Entrypoint**: `lima`
+  - Allows starting the pipeline from CCS BAM files.
+  - Includes `PICARD_SPLITSAMBYNUMBEROFREADS` for splitting large BAM files into chunks.
+  - Includes `PICARD_FILENAME` for renaming split files to `{sample}.chunk{num}.bam` format.
+  - Seamless integration with existing `LIMA` -> `ISOSEQ_REFINE` -> `BAMTOOLS_CONVERT` -> `GSTAMA_POLYACLEANUP` workflow.
+- **Documentation**:
+  - Added `LIMA_ENTRYPOINT_USAGE.md` with detailed usage instructions.
+  - Added `CHANGES_SUMMARY_CN.md` summarizing the changes.
+- **Configuration**:
+  - Updated `nextflow_schema.json` to include `lima` in `entrypoint` enum.
+  - Added `assets/samplesheet_lima_entrypoint.csv` for testing.
+
+### `Fixed`
+
+- **GSTAMA_FILELIST Module**:
+  - Fixed "No such variable: i" error by escaping the variable in comments (`$i` -> `\$i`).
+- **PICARD Modules**:
+  - Modified `PICARD_SPLITSAMBYNUMBEROFREADS` to output to current directory (`.`) instead of hardcoded path, fixing "Directory does not exist" error.
+  - Updated `publishDir` configuration in `conf/modules.config`:
+    - Disabled publication of intermediate split files from `PICARD_SPLITSAMBYNUMBEROFREADS`.
+    - Configured `PICARD_FILENAME` to publish renamed files to `params.outdir` without subdirectories.
+    - Ensured only renamed files (`*.chunk*.bam`) are kept in the results.
+- **Workflow**:
+  - Fixed missing `chunk_num` workflow output error.
+  - Defined default `params.monochromeLogs` to silence warnings.
+
+### `Dependencies`
+
+- Added `picard/splitsambynumberofreads` module (biocontainers/picard:3.4.0).
+- Added `picard/filename` local module (ubuntu:20.04).
+
 ## v2.0.0 - Sapphire Duck [05/09/2024]
 
 New entrypoint option to skip isoseq pre-processing.
