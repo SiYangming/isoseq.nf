@@ -43,40 +43,17 @@ process LIMA {
     """
     OUT_EXT=""
 
-    # Original logic commented out to support chunked filenames (e.g. T6.chunk24.bam)
-    # The regex matching failed for files with multiple dots.
-    # if [[ $ccs =~ bam\$ ]]; then
-    #    OUT_EXT="bam"
-    # elif [[ $ccs =~ fasta\$ ]]; then
-    #    OUT_EXT="fasta"
-    # elif [[ $ccs =~ fasta.gz\$ ]]; then
-    #    OUT_EXT="fasta.gz"
-    # elif [[ $ccs =~ fastq\$ ]]; then
-    #    OUT_EXT="fastq"
-    # elif [[ $ccs =~ fastq.gz\$ ]]; then
-    #    OUT_EXT="fastq.gz"
-    # fi
-
-    case "$ccs" in
-        *.bam)
-            OUT_EXT="bam"
-            ;;
-        *.fasta)
-            OUT_EXT="fasta"
-            ;;
-        *.fasta.gz)
-            OUT_EXT="fasta.gz"
-            ;;
-        *.fastq)
-            OUT_EXT="fastq"
-            ;;
-        *.fastq.gz)
-            OUT_EXT="fastq.gz"
-            ;;
-        *)
-            OUT_EXT="bam"
-            ;;
-    esac
+    if [[ $ccs =~ bam\$ ]]; then
+        OUT_EXT="bam"
+    elif [[ $ccs =~ fasta\$ ]]; then
+        OUT_EXT="fasta"
+    elif [[ $ccs =~ fasta.gz\$ ]]; then
+        OUT_EXT="fasta.gz"
+    elif [[ $ccs =~ fastq\$ ]]; then
+        OUT_EXT="fastq"
+    elif [[ $ccs =~ fastq.gz\$ ]]; then
+        OUT_EXT="fastq.gz"
+    fi
 
     lima \\
         $ccs \\
