@@ -72,7 +72,7 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. `[ id:'sample1' ]`
-      - "picardsplit/*.{bam,sam,cram}":
+      - "*.{bam,sam,cram}":
           type: file
           description: Split BAM files
           pattern: "*.{bam,sam,cram}"

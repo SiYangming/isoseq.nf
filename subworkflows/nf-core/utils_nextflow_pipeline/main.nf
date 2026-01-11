@@ -2,9 +2,8 @@
 // Subworkflow with functionality that may be useful for any Nextflow pipeline
 //
 
-import org.yaml.snakeyaml.Yaml
-import groovy.json.JsonOutput
-import nextflow.extension.FilesEx
+// Note: Import statements removed for strict syntax compatibility
+// Use fully-qualified names: new org.yaml.snakeyaml.Yaml(), groovy.json.JsonOutput, nextflow.extension.FilesEx
 
 /*
 ========================================================================================
@@ -79,10 +78,10 @@ def dumpParametersToJSON(outdir) {
     def timestamp  = new java.util.Date().format( 'yyyy-MM-dd_HH-mm-ss')
     def filename   = "params_${timestamp}.json"
     def temp_pf    = new File(workflow.launchDir.toString(), ".${filename}")
-    def jsonStr    = JsonOutput.toJson(params)
-    temp_pf.text   = JsonOutput.prettyPrint(jsonStr)
+    def jsonStr    = groovy.json.JsonOutput.toJson(params)
+    temp_pf.text   = groovy.json.JsonOutput.prettyPrint(jsonStr)
 
-    FilesEx.copyTo(temp_pf.toPath(), "${outdir}/pipeline_info/params_${timestamp}.json")
+    nextflow.extension.FilesEx.copyTo(temp_pf.toPath(), "${outdir}/pipeline_info/params_${timestamp}.json")
     temp_pf.delete()
 }
 
@@ -90,7 +89,7 @@ def dumpParametersToJSON(outdir) {
 // When running with -profile conda, warn if channels have not been set-up appropriately
 //
 def checkCondaChannels() {
-    Yaml parser = new Yaml()
+    def parser = new org.yaml.snakeyaml.Yaml()
     def channels = []
     try {
         def config = parser.load("conda config --show channels".execute().text)
@@ -106,10 +105,9 @@ def checkCondaChannels() {
     def channels_missing = ((required_channels_in_order as Set) - (channels as Set)) as Boolean
 
     // Check that they are in the right order
-    def channel_priority_violation = false
     def n = required_channels_in_order.size()
-    for (int i = 0; i < n - 1; i++) {
-        channel_priority_violation |= !(channels.indexOf(required_channels_in_order[i]) < channels.indexOf(required_channels_in_order[i+1]))
+    def channel_priority_violation = (0..<(n-1)).any { i ->
+        !(channels.indexOf(required_channels_in_order[i]) < channels.indexOf(required_channels_in_order[i+1]))
     }
 
     if (channels_missing | channel_priority_violation) {

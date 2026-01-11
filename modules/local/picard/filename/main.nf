@@ -11,7 +11,7 @@ process PICARD_FILENAME {
     tuple val(meta), path(bams)
 
     output:
-    tuple val(meta), path("renamed/*.bam"), emit: bam
+    tuple val(meta), path("*.bam"), emit: bam
     path "versions.yml"                   , emit: versions
 
     when:
@@ -20,14 +20,12 @@ process PICARD_FILENAME {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p renamed
-    
     for f in *.bam; do
         # Extract the number from the filename (e.g., T6.chunk_0001.bam -> 1)
         num=\$(echo "\$f" | sed 's/.*_0*//; s/\\.bam//')
-        
+
         # Rename to format: {prefix}.chunk{num}.bam
-        mv "\$f" "renamed/${prefix}.chunk\${num}.bam"
+        mv "\$f" "${prefix}.chunk\${num}.bam"
     done
 
     cat <<-END_VERSIONS > versions.yml

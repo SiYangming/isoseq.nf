@@ -1,6 +1,6 @@
 name: picard_splitsambynumberofreads
 
-name: minimap2_alignchannels:
+channels:
   - conda-forge
   - bioconda
   - defaults

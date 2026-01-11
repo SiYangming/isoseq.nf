@@ -22,7 +22,16 @@ process GSTAMA_FILELIST {
     """
     for i in *.bed
     do
-        echo -e "\${i}\\t${cap}\\t${order}\\t\${i}" >> ${prefix}.tsv
+        # 1. Check the file status corresponding to the variable i
+        #    The "-s" test option verifies two conditions simultaneously:
+        #    - The file exists in the filesystem
+        #    - The file has a size greater than 0 bytes (non-empty)
+        # 2. If the above conditions are both satisfied (return true),
+        #    append the formatted tab-separated content to the tsv file
+        #    whose prefix is specified by the variable ${prefix}
+        if [ -s "\${i}" ]; then
+            echo -e "\${i}\\t${cap}\\t${order}\\t\${i}" >> ${prefix}.tsv
+        fi
     done
 
     cat <<-END_VERSIONS > versions.yml

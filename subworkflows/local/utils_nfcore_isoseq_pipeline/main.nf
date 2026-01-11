@@ -87,6 +87,18 @@ workflow PIPELINE_INITIALISATION {
             .set { ch_samplesheet }
     }
 
+    if (params.entrypoint == "lima") {
+        Channel
+            .fromSamplesheet("input")
+            .map {
+                if (!file(it[1]).exists()) {
+                    exit 1, "ERROR: Please check input samplesheet -> BAM file does not exist!\n${it[1]}"
+                }
+                [ it[0], file(it[1]) ]
+            }
+            .set { ch_samplesheet }
+    }
+
     if (params.entrypoint == "map") {
         Channel
             .fromSamplesheet("input")
@@ -241,13 +253,15 @@ def methodsDescriptionText(mqc_methods_yaml) {
 
     // Pipeline DOI
     if (meta.manifest_map.doi) {
-        // Using a loop to handle multiple DOIs
+        // Using collect() to handle multiple DOIs
         // Removing `https://doi.org/` to handle pipelines using DOIs vs DOI resolvers
         // Removing ` ` since the manifest.doi is a string and not a proper list
-        def temp_doi_ref = ""
-        String[] manifest_doi = meta.manifest_map.doi.tokenize(",")
-        for (String doi_ref: manifest_doi) temp_doi_ref += "(doi: <a href=\'https://doi.org/${doi_ref.replace("https://doi.org/", "").replace(" ", "")}\'>${doi_ref.replace("https://doi.org/", "").replace(" ", "")}</a>), "
-        meta["doi_text"] = temp_doi_ref.substring(0, temp_doi_ref.length() - 2)
+        def manifest_doi = meta.manifest_map.doi.tokenize(",")
+        def temp_doi_ref = manifest_doi.collect { doi_ref ->
+            def clean_doi = doi_ref.replace("https://doi.org/", "").replace(" ", "")
+            "(doi: <a href='https://doi.org/${clean_doi}'>${clean_doi}</a>)"
+        }.join(", ")
+        meta["doi_text"] = temp_doi_ref
     } else meta["doi_text"] = ""
     meta["nodoi_text"] = meta.manifest_map.doi ? "" : "<li>If available, make sure to update the text to include the Zenodo DOI of version of the pipeline used. </li>"
 
@@ -279,9 +293,9 @@ def create_pbccs_channel(row, chunk) {
         exit 1, "ERROR: Please check input samplesheet -> PBI file does not exist!\n${row[2]}"
     }
 
-    def array = []
-    for ( i = 1 ; i <= chunk ; i++ ) {
-        array << [ row[0], file(row[1]), file(row[2]) ]
+    // Create array with chunk entries using collect()
+    def array = (1..chunk).collect { i ->
+        [ row[0], file(row[1]), file(row[2]) ]
     }
 
     return array

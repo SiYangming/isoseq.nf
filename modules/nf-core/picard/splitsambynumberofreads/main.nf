@@ -15,7 +15,7 @@ process PICARD_SPLITSAMBYNUMBEROFREADS {
     path arguments_file
 
     output:
-    tuple val(meta), path("picardsplit/*.{bam,sam,cram}"), emit: bam
+    tuple val(meta), path("*.{bam,sam,cram}"), emit: bam
     path "versions.yml", emit: versions
 
     when:
@@ -43,8 +43,6 @@ process PICARD_SPLITSAMBYNUMBEROFREADS {
     }
     """
 
-    mkdir picardsplit
-
     picard \\
         -Xmx${avail_mem}M \\
         SplitSamByNumberOfReads \\
@@ -53,7 +51,7 @@ process PICARD_SPLITSAMBYNUMBEROFREADS {
         ${args_file} \\
         ${args} \\
         --INPUT ${input} \\
-        --OUTPUT picardsplit \\
+        --OUTPUT . \
         --OUT_PREFIX ${prefix}
 
     cat <<-END_VERSIONS > versions.yml
@@ -74,17 +72,16 @@ process PICARD_SPLITSAMBYNUMBEROFREADS {
     if ( !['bam', 'cram', 'sam'].contains(ext) )
         ext = 'bam'
     """
-    mkdir picardsplit
 
     if echo "${split_to_N_files}" | grep -qE '^[1-9][0-9]*\$'; then
         i=1
         while [ \$i -le ${split_to_N_files} ]; do
             fname=\$(printf "%04d" \$i)
-            touch picardsplit/${prefix}_\${fname}.${ext}
+            touch ${prefix}_\${fname}.${ext}
             i=\$((i + 1))
         done
     else
-        touch picardsplit/${prefix}_0001.${ext}
+        touch ${prefix}_0001.${ext}
     fi
 
     cat <<-END_VERSIONS > versions.yml

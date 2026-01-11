@@ -16,15 +16,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_isos
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-ch_multiqc_config          = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-ch_multiqc_custom_config   = params.multiqc_config ? Channel.fromPath( params.multiqc_config, checkIfExists: true ) : Channel.empty()
-ch_multiqc_logo            = params.multiqc_logo   ? Channel.fromPath( params.multiqc_logo, checkIfExists: true ) : Channel.empty()
-ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-//ch_multiqc_config = [
-//                        file("$projectDir/assets/multiqc_config.yml"           , checkIfExists: true),
-//                        file("$projectDir/assets/nf-core-isoseq_logo_light.png", checkIfExists: true)
-//                    ]
-//ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
+// Note: Channel declarations moved inside the workflow block to comply with strict syntax
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,10 +76,18 @@ workflow ISOSEQ {
 
     main:
     //
+    // INITIALIZE CONFIG FILE CHANNELS
+    //
+    def ch_multiqc_config = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    def ch_multiqc_custom_config = params.multiqc_config ? channel.fromPath(params.multiqc_config, checkIfExists: true) : channel.empty()
+    def ch_multiqc_logo = params.multiqc_logo ? channel.fromPath(params.multiqc_logo, checkIfExists: true) : channel.empty()
+    def ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+
+    //
     // SET UP VERSIONS CHANNELS
     //
-    ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    def ch_versions = channel.empty()
+    def ch_multiqc_files = channel.empty()
 
 
     //
@@ -117,7 +117,17 @@ workflow ISOSEQ {
         .set { ch_pbccs_bam_updated }
 
         LIMA(ch_pbccs_bam_updated, SET_PRIMERS_CHANNEL.out.data)  // Remove primers from CCS
-        ISOSEQ_REFINE(LIMA.out.bam, SET_PRIMERS_CHANNEL.out.data) // Discard CCS without polyA tails, remove it from the other
+
+        LIMA.out.bam
+            .transpose()
+            .map { meta, bam ->
+                def new_meta = meta.clone()
+                new_meta.id = bam.baseName + ".refined"
+                [ new_meta, bam ]
+            }
+            .set { ch_lima_bam_transposed }
+
+        ISOSEQ_REFINE(ch_lima_bam_transposed, SET_PRIMERS_CHANNEL.out.data) // Discard CCS without polyA tails, remove it from the other
         BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)                   // Convert bam to fasta
         GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)            // Clean polyA tails from reads
     }
@@ -150,7 +160,17 @@ workflow ISOSEQ {
         .set { ch_lima_bam_updated }
 
         LIMA(ch_lima_bam_updated, SET_PRIMERS_CHANNEL.out.data)    // Remove primers from CCS
-        ISOSEQ_REFINE(LIMA.out.bam, SET_PRIMERS_CHANNEL.out.data)  // Discard CCS without polyA tails, remove it from the other
+
+        LIMA.out.bam
+            .transpose()
+            .map { meta, bam ->
+                def new_meta = meta.clone()
+                new_meta.id = bam.baseName + ".refined"
+                [ new_meta, bam ]
+            }
+            .set { ch_lima_bam_transposed }
+
+        ISOSEQ_REFINE(ch_lima_bam_transposed, SET_PRIMERS_CHANNEL.out.data)  // Discard CCS without polyA tails, remove it from the other
         BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)                    // Convert bam to fasta
         GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)             // Clean polyA tails from reads
     }

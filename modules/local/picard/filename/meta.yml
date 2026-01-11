@@ -1,0 +1,59 @@
+name: "picard_filename"
+description: Rename BAM files from Picard SplitSamByNumberOfReads output format to LIMA-compatible chunk format
+keywords:
+  - rename
+  - bam
+  - picard
+  - format
+  - lima
+  - isoseq
+tools:
+  - "sed":
+      description: "Stream editor for filtering and transforming text"
+      homepage: "https://www.gnu.org/software/sed/"
+      documentation: "https://www.gnu.org/software/sed/manual/sed.html"
+      tool_dev_url: "https://savannah.gnu.org/projects/sed"
+      licence: ["GPL v3"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - bams:
+        type: file
+        description: |
+          BAM files from Picard SplitSamByNumberOfReads with format: {prefix}_0001.bam, {prefix}_0002.bam, etc.
+        pattern: "*.bam"
+        ontologies:
+          - edam: "http://edamontology.org/format_2572" # BAM
+
+output:
+  bam:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.bam":
+          type: file
+          description: |
+            Renamed BAM files with format: {prefix}.chunk{num}.bam (e.g., sample1.chunk1.bam, sample1.chunk2.bam)
+            This format is compatible with LIMA input expectations for the lima entrypoint.
+          pattern: "*.bam"
+          ontologies:
+            - edam: "http://edamontology.org/format_2572" # BAM
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750 # YAML
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"
