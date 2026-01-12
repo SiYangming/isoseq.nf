@@ -11,3 +11,4 @@ testing*
 .vscode
 /testdata_resuts
 /nextflow_work
+/testdata_results
