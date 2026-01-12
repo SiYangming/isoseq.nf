@@ -1,0 +1,1 @@
+https://downloads.pacbcloud.com/public/dataset/Kinnex-full-length-RNA/
