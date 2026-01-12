@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pbds:BarcodeSet xmlns:pbbase="http://pacificbiosciences.com/PacBioBaseDataModel.xsd" xmlns:pbds="http://pacificbiosciences.com/PacBioDatasets.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" UniqueId="b16188a2-249e-4f0e-fcca-7c2b9a307387" Tags="pacbio,mas_seq" MetaType="PacBio.DataSet.BarcodeSet" TimeStampedName="pacbio_dataset_barcodeset-230309_002058769" Name="MAS-Seq Adapter v3 (MAS8)" CreatedAt="2023-03-08T16:20:58" Version="3.0.1" xsi:schemaLocation="http://pacificbiosciences.com/PacBioDataModel.xsd">
+	<pbbase:ExternalResources>
+		<pbbase:ExternalResource UniqueId="854f1cc1-5fda-4e2d-a0db-53add7213f6c" TimeStampedName="pacbio_barcodefile_barcodefastafile-230309_002058768" ResourceId="mas8_primers.fasta" MetaType="PacBio.BarcodeFile.BarcodeFastaFile">
+			<pbbase:FileIndices>
+				<pbbase:FileIndex UniqueId="29246b43-8c2a-47e4-bf12-58f6d1e455ae" TimeStampedName="pacbio_index_samindex-230309_002058767" ResourceId="mas8_primers.fasta.fai" MetaType="PacBio.Index.SamIndex"/>
+			</pbbase:FileIndices>
+		</pbbase:ExternalResource>
+	</pbbase:ExternalResources>
+	<pbbase:SupplementalResources/>
+	<pbds:DataSetMetadata>
+		<pbds:TotalLength>150</pbds:TotalLength>
+		<pbds:NumRecords>9</pbds:NumRecords>
+		<pbds:BarcodeConstruction/>
+	</pbds:DataSetMetadata>
+</pbds:BarcodeSet>

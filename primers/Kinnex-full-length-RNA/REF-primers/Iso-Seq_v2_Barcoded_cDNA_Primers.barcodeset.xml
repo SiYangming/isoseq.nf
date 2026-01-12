@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pbds:BarcodeSet
+    xmlns:pbbase="http://pacificbiosciences.com/PacBioBaseDataModel.xsd" xmlns:pbds="http://pacificbiosciences.com/PacBioDatasets.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    UniqueId="2d7ba578-6a5e-92dc-f8af-26af59617086"
+    Tags="pacbio,isoseq"
+    MetaType="PacBio.DataSet.BarcodeSet"
+    TimeStampedName="pacbio_dataset_barcodeset-230509_150639199"
+    Name="Iso-Seq v2 Barcoded cDNA Primers"
+    CreatedAt="2023-05-09T08:06:39"
+    Version="3.0.1"
+    xsi:schemaLocation="http://pacificbiosciences.com/PacBioDataModel.xsd">
+	<pbbase:ExternalResources>
+		<pbbase:ExternalResource
+        UniqueId="a6a045b3-ffcb-400d-9dd3-a7d2268983d1"
+        TimeStampedName="pacbio_barcodefile_barcodefastafile-230509_150639198"
+        ResourceId="IsoSeq_v2_primers_12.fasta"
+        MetaType="PacBio.BarcodeFile.BarcodeFastaFile">
+			<pbbase:FileIndices>
+				<pbbase:FileIndex
+            UniqueId="2d0e07a2-363d-4cd4-941e-1b028b50dac9"
+            TimeStampedName="pacbio_index_samindex-230509_150639197"
+            ResourceId="IsoSeq_v2_primers_12.fasta.fai"
+            MetaType="PacBio.Index.SamIndex"/>
+			</pbbase:FileIndices>
+		</pbbase:ExternalResource>
+	</pbbase:ExternalResources>
+	<pbbase:SupplementalResources/>
+	<pbds:DataSetMetadata>
+		<pbds:TotalLength>637</pbds:TotalLength>
+		<pbds:NumRecords>13</pbds:NumRecords>
+		<pbds:BarcodeConstruction/>
+	</pbds:DataSetMetadata>
+</pbds:BarcodeSet>
