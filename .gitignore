@@ -9,6 +9,6 @@ testing*
 *.pyc
 .idea/
 .vscode
-/testdata_resuts
 /nextflow_work
 /testdata_results
+/null
