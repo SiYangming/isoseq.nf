@@ -87,7 +87,7 @@ workflow PIPELINE_INITIALISATION {
             .set { ch_samplesheet }
     }
 
-    if (params.entrypoint == "lima") {
+    if ( [ 'lima', 'isoseq3_refine', 'bamtools_convert' ].contains(params.entrypoint) ) {
         Channel
             .fromSamplesheet("input")
             .map {

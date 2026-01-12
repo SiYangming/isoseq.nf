@@ -24,12 +24,16 @@ fi
 echo "nextflow: $(nextflow -version 2>&1 | head -n1)"
 
 declare -a CMDS=(
-  #"nextflow run main.nf -profile docker -c conf/test_local.config --outdir testdata_resuts/test"
-  #"nextflow run main.nf -profile docker -c conf/test_minimap2_local.config --outdir testdata_resuts/test_minimap2"
-  #"nextflow run main.nf -profile docker -c conf/test_minimap2_map_entrypoint_local.config --outdir testdata_resuts/test_minimap2_map_entrypoint"
-  #"nextflow run main.nf -profile docker -c conf/test_ultra_map_entrypoint_local.config --outdir testdata_resuts/test_ultra_map_entrypoint"
-  "nextflow run main.nf -profile docker -c conf/test_lima_entrypoint_local.config --outdir testdata_resuts/test_lima_entrypoint"
-  "nextflow run main.nf -profile docker -c conf/test_ultra_lima_entrypoint_local.config --outdir testdata_resuts/test_ultra_lima_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_local.config --outdir testdata_results/test"
+  "nextflow run main.nf -profile docker -c conf/test_minimap2_local.config --outdir testdata_results/test_minimap2"
+  "nextflow run main.nf -profile docker -c conf/test_minimap2_map_entrypoint_local.config --outdir testdata_results/test_minimap2_map_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_ultra_map_entrypoint_local.config --outdir testdata_results/test_ultra_map_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_lima_entrypoint_local.config --outdir testdata_results/test_lima_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_ultra_lima_entrypoint_local.config --outdir testdata_results/test_ultra_lima_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_isoseq3_refine_entrypoint_local.config --outdir testdata_results/test_isoseq3_refine_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_bamtools_convert_entrypoint_local.config --outdir testdata_results/test_bamtools_convert_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_ultra_isoseq3_refine_entrypoint_local.config --outdir testdata_results/test_ultra_isoseq3_refine_entrypoint"
+  "nextflow run main.nf -profile docker -c conf/test_ultra_bamtools_convert_entrypoint_local.config --outdir testdata_results/test_ultra_bamtools_convert_entrypoint"
 )
 
 for CMD in "${CMDS[@]}"; do

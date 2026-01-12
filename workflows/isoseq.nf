@@ -134,32 +134,35 @@ workflow ISOSEQ {
 
 
 // LIMA pipeline entrypoint ##################################################################
-    if (params.entrypoint == "lima") {
+    if ( [ 'lima', 'isoseq3_refine', 'bamtools_convert' ].contains(params.entrypoint) ) {
 
-        // Split CCS BAM files using Picard
+        // Split BAM files using Picard
         PICARD_SPLITSAMBYNUMBEROFREADS(
-            ch_samplesheet,                  // Input: CCS BAM files
+            ch_samplesheet,                  // Input: BAM files
             [ [:], [], [] ],                 // No reference needed
             Channel.value(0),                // split_to_N_reads (not used)
             Channel.value(params.chunk),     // split_to_N_files
             []                               // No arguments file
         )
 
-        // Rename split BAM files to match LIMA input format
+        // Rename split BAM files to match input format
         PICARD_FILENAME(PICARD_SPLITSAMBYNUMBEROFREADS.out.bam)
 
         // Flatten the renamed BAM files and update meta
         PICARD_FILENAME.out.bam
-        .transpose()
-        .map {
-            def chk       = (it[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
-            def id_former = it[0].id
-            def id_new    = it[0].id + "." + chk
-            return [ [id:id_new, id_former:id_former, single_end:true], it[1] ]
-        }
-        .set { ch_lima_bam_updated }
+            .transpose()
+            .map {
+                def chk       = (it[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
+                def id_former = it[0].id
+                def id_new    = it[0].id + "." + chk
+                return [ [id:id_new, id_former:id_former, single_end:true], it[1] ]
+            }
+            .set { ch_picard_filename_bam_updated }
+    }
 
-        LIMA(ch_lima_bam_updated, SET_PRIMERS_CHANNEL.out.data)    // Remove primers from CCS
+    if (params.entrypoint == "lima") {
+
+        LIMA(ch_picard_filename_bam_updated, SET_PRIMERS_CHANNEL.out.data)
 
         LIMA.out.bam
             .transpose()
@@ -176,11 +179,32 @@ workflow ISOSEQ {
     }
 
 
-// MAP pipeline entrypoint ##################################################################
-    if (params.entrypoint == "isoseq") {
-        ch_reads_to_map = GSTAMA_POLYACLEANUP.out.fasta
+// ISOSEQ3_REFINE pipeline entrypoint #########################################################
+    if (params.entrypoint == "isoseq3_refine") {
+
+        ch_picard_filename_bam_updated
+            .map { meta, bam ->
+                def new_meta = meta.clone()
+                new_meta.id = bam.baseName + ".refined"
+                [ new_meta, bam ]
+            }
+            .set { ch_isoseq_refine_in }
+
+        ISOSEQ_REFINE(ch_isoseq_refine_in, SET_PRIMERS_CHANNEL.out.data)
+        BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)
+        GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)
     }
-    else if (params.entrypoint == "lima") {
+
+
+// BAMTOOLS_CONVERT pipeline entrypoint ########################################################
+    if (params.entrypoint == "bamtools_convert") {
+        BAMTOOLS_CONVERT(ch_picard_filename_bam_updated)
+        GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)
+    }
+
+
+// MAP pipeline entrypoint ##################################################################
+    if ( [ 'isoseq', 'lima', 'isoseq3_refine', 'bamtools_convert' ].contains(params.entrypoint) ) {
         ch_reads_to_map = GSTAMA_POLYACLEANUP.out.fasta
     }
     else if (params.entrypoint == "map") {
@@ -242,6 +266,21 @@ workflow ISOSEQ {
         ch_versions = ch_versions.mix(PICARD_FILENAME.out.versions)
         ch_versions = ch_versions.mix(LIMA.out.versions)
         ch_versions = ch_versions.mix(ISOSEQ_REFINE.out.versions)
+        ch_versions = ch_versions.mix(BAMTOOLS_CONVERT.out.versions)
+        ch_versions = ch_versions.mix(GSTAMA_POLYACLEANUP.out.versions)
+    }
+
+    if (params.entrypoint == "isoseq3_refine") {
+        ch_versions = ch_versions.mix(PICARD_SPLITSAMBYNUMBEROFREADS.out.versions)
+        ch_versions = ch_versions.mix(PICARD_FILENAME.out.versions)
+        ch_versions = ch_versions.mix(ISOSEQ_REFINE.out.versions)
+        ch_versions = ch_versions.mix(BAMTOOLS_CONVERT.out.versions)
+        ch_versions = ch_versions.mix(GSTAMA_POLYACLEANUP.out.versions)
+    }
+
+    if (params.entrypoint == "bamtools_convert") {
+        ch_versions = ch_versions.mix(PICARD_SPLITSAMBYNUMBEROFREADS.out.versions)
+        ch_versions = ch_versions.mix(PICARD_FILENAME.out.versions)
         ch_versions = ch_versions.mix(BAMTOOLS_CONVERT.out.versions)
         ch_versions = ch_versions.mix(GSTAMA_POLYACLEANUP.out.versions)
     }
