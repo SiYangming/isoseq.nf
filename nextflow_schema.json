@@ -202,6 +202,14 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+                },
+                "igenomes_base": {
+                    "type": "string",
+                    "fa_icon": "fas fa-cloud",
+                    "description": "Base path for iGenomes reference files.",
+                    "default": "s3://ngi-igenomes/igenomes/",
+                    "hidden": true,
+                    "help_text": "The base path used by `igenomes.config` to construct reference genome paths for all configured species."
                 }
             }
         },
@@ -403,6 +411,14 @@
                     "description": "Base URL or local path to location of pipeline test dataset files",
                     "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
                     "hidden": true
+                },
+                "large_genome": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-expand-arrows-alt",
+                    "description": "Enable large-genome resource overrides.",
+                    "default": false,
+                    "hidden": true,
+                    "help_text": "When set to true, the pipeline applies additional resource overrides defined in `conf/large_genome.config`. This is useful for large genomes such as human or plant genomes that require more memory and CPUs."
                 }
             }
         }

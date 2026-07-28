@@ -1,0 +1,15 @@
+- [x] `nextflow_schema.json` 的 `reference_genome_options.properties` 中已新增 `igenomes_base` 属性
+- [x] `igenomes_base` 属性设置为 `hidden: true`，不影响 `nf-core launch` 界面
+- [x] `nextflow_schema.json` 的 `generic_options.properties` 中已新增 `large_genome` 属性
+- [x] `large_genome` 属性设置为 `hidden: true`，不影响 `nf-core launch` 界面
+- [x] `nextflow.config` 中已移除 `params.validationSchemaIgnoreParams`
+- [x] `nextflow.config` 中已添加 `validation { ignoreParams = ["genomes"] }` 配置作用域
+- [x] `validation` 作用域位于 `params {}` 块之后、`includeConfig` 之前
+- [x] nf-schema 插件已升级至 2.7.2（支持 `validation.ignoreParams` 配置作用域）
+- [x] `nextflow.config` 中已移除重复的 `monochromeLogs` 参数
+- [x] 运行 `nextflow run main.nf -profile test_local,docker --outdir results/test_isoseq` 时不再出现 `--genomes.*` 验证警告
+- [x] 运行时不再出现 `--igenomes_base` 验证警告
+- [x] 运行时不再出现 `--validationSchemaIgnoreParams` 验证警告
+- [x] 运行时不再出现 `--monochromeLogs` 验证警告
+- [x] 运行时不再出现 `--large_genome` 验证警告
+- [x] 管道成功完成（"Pipeline completed successfully"，exit code 0）
