@@ -1,0 +1,5 @@
+- [x] `conf/test_local.config` 已添加 `process_low`/`process_medium`/`process_high` 资源覆盖
+- [x] `conf/test_local.config` 已添加 `trace.overwrite`、`report.overwrite`、`timeline.overwrite`
+- [x] 所有其他 `_local.config` 文件已检查，必要时已添加相同覆盖
+- [x] `nextflow run main.nf -profile test_local,docker --outdir results/test_isoseq` 能正常运行，不抛出内存超限错误
+- [x] 重复运行同一命令不抛出文件已存在错误

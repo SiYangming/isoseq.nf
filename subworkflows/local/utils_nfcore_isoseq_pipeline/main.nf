@@ -10,7 +10,7 @@
 
 include { UTILS_NFVALIDATION_PLUGIN } from '../../nf-core/utils_nfvalidation_plugin'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
-include { fromSamplesheet           } from 'plugin/nf-schema'
+include { samplesheetToList         } from 'plugin/nf-schema'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
@@ -82,14 +82,14 @@ workflow PIPELINE_INITIALISATION {
     //
     if (params.entrypoint == "isoseq") {
         Channel
-            .fromSamplesheet("input")
+            .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
             .flatMap { create_pbccs_channel(it, params.chunk) }
             .set { ch_samplesheet }
     }
 
     if ( [ 'lima', 'isoseq3_refine', 'bamtools_convert' ].contains(params.entrypoint) ) {
         Channel
-            .fromSamplesheet("input")
+            .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
             .map {
                 if (!file(it[1]).exists()) {
                     exit 1, "ERROR: Please check input samplesheet -> BAM file does not exist!\n${it[1]}"
@@ -101,7 +101,7 @@ workflow PIPELINE_INITIALISATION {
 
     if (params.entrypoint == "map") {
         Channel
-            .fromSamplesheet("input")
+            .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
             .flatMap { create_reads_channel(it) }
             .splitFasta(
                 by: params.chunk,
