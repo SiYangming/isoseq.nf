@@ -1,0 +1,4 @@
+- [x] 后端 `run_nextflow` 已成功支持 `mode` 参数。
+- [x] 前端成功增加了 Local Data 和 Online Data 的选择器。
+- [x] 切换为 Local Data 时，能生成带有 `-c conf/test_local.config run main.nf` 的命令。
+- [x] 切换为 Online Data 时，能生成带有 `run isoseq.nf -profile test,...` 的命令。

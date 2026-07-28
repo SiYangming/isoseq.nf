@@ -3,6 +3,18 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.0.1 - [2026-07-28]
+
+### Enhancements & fixes
+
+- **Directory restructure**: Centralised all sample sheets (including test data) into `samplesheets/` for consistency with `circdna.nf`; legacy `testdata/samplesheet*.csv` paths in test profiles now resolve to `samplesheets/samplesheet*.csv`.
+- **Server profile**: Added `server` profile loading `conf/server.config` with FASTA base path, 9-species genome map (GRCh38/hg38/GRCh37/hg19/mm10/TAIR10/IRGSP-1.0/Sscrofa10.2/susScr3), `local` executor (96 CPUs / 400 GB), per-process resource limits and Docker engine configuration.
+- **Large-genome profile**: Added `large_genome` config (composable with `server` via `server_large_genome`) to raise memory/time ceilings for `MINIMAP2_ALIGN`, `ULTRA_INDEX`, `ULTRA_ALIGN`, `PBCCS`, `LIMA`, `ISOSEQ_REFINE`, `GSTAMA_COLLAPSE`, `GSTAMA_MERGE` (no `BWA_INDEX` in this pipeline).
+- **`igenomes_ignored` config**: New `conf/igenomes_ignored.config` provides empty `params.genomes` so the pipeline no longer fails `genomeExistsError` when `--igenomes_ignore` is used.
+- **Plugin upgrade**: Replaced `nf-validation@1.1.3` with `nf-schema@2.5.1`; updated `paramsSummaryMap` / `fromSamplesheet` imports in `utils_nfcore_isoseq_pipeline` and `paramsHelp` / `paramsSummaryLog` / `validateParameters` imports in `utils_nfvalidation_plugin` accordingly.
+- **Manifest bump**: `manifest.nextflowVersion` raised to `!>=25.04.8` (aligned with `circdna.nf`); deprecated `params.pipelines_testdata_base_path` removed in favour of local `samplesheets/`.
+- **Documentation**: Added `SERVER_RUN_GUIDE.md` with per-genome server run commands, FASTA sync instructions and `screen` operations.
+
 ## v3.0.0 - Yangming Si [10/01/2026]
 
 Implement LIMA entrypoint and fix various bugs.
@@ -19,7 +31,7 @@ Implement LIMA entrypoint and fix various bugs.
   - Added `CHANGES_SUMMARY_CN.md` summarizing the changes.
 - **Configuration**:
   - Updated `nextflow_schema.json` to include `lima` in `entrypoint` enum.
-  - Added `assets/samplesheet_lima_entrypoint.csv` for testing.
+  - Added `samplesheets/samplesheet_lima_entrypoint.csv` for testing.
 
 ### `Fixed`
 

@@ -49,7 +49,7 @@ sample1,None,None,sample1.fa.gz
 sample2,None,None,sample2.fa.gz
 ```
 
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+An [example samplesheet](../samplesheets/samplesheet.csv) has been provided with the pipeline.
 
 ### Primer file
 
@@ -267,4 +267,110 @@ We recommend adding the following line to your environment to limit this (typica
 
 ```bash
 NXF_OPTS='-Xms1g -Xmx4g'
+```
+
+---
+
+## Local Test Data and Commands
+
+This section describes the local test data available in the `testdata/` directory and provides example commands for testing different pipeline entrypoints and aligners.
+
+### Test Data Files
+
+The `testdata/` directory contains the following files for local pipeline testing:
+
+| File | Description |
+| --- | --- |
+| `alz.1perc.subreads.10000.bam` | PacBio subreads BAM file for `isoseq` entrypoint testing |
+| `alz.1perc.subreads.10000.bam.pbi` | PacBio index file for the subreads BAM |
+| `alz.ccs.bam` | CCS BAM file for `lima` entrypoint testing |
+| `alz.lima.bam` | LIMA-processed BAM for `isoseq3_refine` entrypoint testing |
+| `alz.isoseq_refine.bam` | Refined BAM for `bamtools_convert` entrypoint testing |
+| `alz_lima.fl.NEB_5p--NEB_Clontech_3p.bam` | Full-length Iso-Seq test BAM file |
+| `long_reads.fa.gz` | Nanopore long reads (FASTA) for `map` entrypoint testing |
+| `primers.fasta` | Iso-Seq v2 full-length primers |
+| `primers_complete.fasta` | Complete primer set with multiple primer pairs |
+| `reference/Homo_sapiens.GRCh38.dna.chromosome.19.fasta` | Human GRCh38 reference genome (chr19) |
+| `reference/Homo_sapiens.GRCh38.104.chr.13_18_19.gtf` | Human GRCh38 gene annotation (chr13, 18, 19) |
+
+### Test Commands
+
+All commands below should be run from the `isoseq.nf/` directory. The test profiles already configure `--fasta` and `--gtf` to point to the `testdata/reference/` directory.
+
+#### 1. Default Entrypoint (`isoseq`) - Ultra Aligner
+Run the full pipeline from subreads BAM (CCS → LIMA → Refine → Alignment → TAMA).
+```bash
+nextflow run main.nf \
+    -profile test_local,docker \
+    --outdir results/test_isoseq
+```
+
+#### 2. Default Entrypoint (`isoseq`) - Minimap2 Aligner
+```bash
+nextflow run main.nf \
+    -profile test_minimap2_local,docker \
+    --outdir results/test_minimap2
+```
+
+#### 3. `lima` Entrypoint
+Start from CCS BAM (skips the CCS step).
+```bash
+nextflow run main.nf \
+    -profile test_lima_entrypoint_local,docker \
+    --outdir results/test_lima
+```
+
+#### 4. `isoseq3_refine` Entrypoint
+Start from refined BAM (skips CCS and LIMA steps).
+```bash
+nextflow run main.nf \
+    -profile test_isoseq3_refine_entrypoint_local,docker \
+    --outdir results/test_refine
+```
+
+#### 5. `bamtools_convert` Entrypoint
+Convert BAM to FASTQ only, skipping alignment and TAMA analysis.
+```bash
+nextflow run main.nf \
+    -profile test_bamtools_convert_entrypoint_local,docker \
+    --outdir results/test_convert
+```
+
+#### 6. `map` Entrypoint - Minimap2
+Direct alignment and TAMA analysis from FASTA data (for Nanopore reads).
+```bash
+nextflow run main.nf \
+    -profile test_minimap2_map_entrypoint_local,docker \
+    --outdir results/test_map
+```
+
+#### 7. ULTRA Aligner + All Entrypoints
+The following commands test ULTRA as the aligner with different entrypoints.
+
+**ULTRA + `lima` Entrypoint:**
+```bash
+nextflow run main.nf \
+    -profile test_ultra_lima_entrypoint_local,docker \
+    --outdir results/test_ultra_lima
+```
+
+**ULTRA + `isoseq3_refine` Entrypoint:**
+```bash
+nextflow run main.nf \
+    -profile test_ultra_isoseq3_refine_entrypoint_local,docker \
+    --outdir results/test_ultra_refine
+```
+
+**ULTRA + `bamtools_convert` Entrypoint:**
+```bash
+nextflow run main.nf \
+    -profile test_ultra_bamtools_convert_entrypoint_local,docker \
+    --outdir results/test_ultra_convert
+```
+
+**ULTRA + `map` Entrypoint:**
+```bash
+nextflow run main.nf \
+    -profile test_ultra_map_entrypoint_local,docker \
+    --outdir results/test_ultra_map
 ```

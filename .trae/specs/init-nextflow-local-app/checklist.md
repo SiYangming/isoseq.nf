@@ -1,0 +1,6 @@
+- [x] `nextflow.app` 目录成功创建，并包含完整的 Tauri + Next.js 项目结构。
+- [x] 启动 App 时，能够在前端页面看到 Java, Nextflow, Docker/Conda 的环境检测状态。
+- [x] 能够成功读取 `isoseq.nf/nextflow_schema.json`，并在界面上呈现出分组的参数配置表单。
+- [x] 具备“一键运行测试用例”按钮，点击后能够正确触发针对 `isoseq.nf` 的本地 `nextflow run` 命令。
+- [x] App 内具备终端视图，能够实时输出 Nextflow 运行过程中的 stdout/stderr 日志。
+- [x] 测试运行成功完成后，能提供快速查看/打开 `results` 目录及 MultiQC 报告的入口。

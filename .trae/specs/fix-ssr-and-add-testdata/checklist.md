@@ -1,0 +1,5 @@
+- [x] Next.js 页面加载不再出现 Hydration 错误。
+- [x] Tauri 开发控制台不再抛出 `transformCallback` 错误。
+- [x] 表单区域具备“Load Testdata”选项，且点击能正确填充输入框。
+- [x] 界面上提供了 Docker 和 Conda 的执行 Profile 选择。
+- [x] 后台 `run_nextflow` 能正确接收并应用选中的 Profile 进行执行。
