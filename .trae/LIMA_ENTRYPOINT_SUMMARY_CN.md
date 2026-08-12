@@ -114,7 +114,7 @@ nextflow run main.nf \
 使用项目提供的测试数据：
 ```bash
 nextflow run main.nf \
-  --input samplesheets/samplesheet_lima_entrypoint.csv \
+  --input samplesheets/test_lima_entrypoint.csv \
   --entrypoint lima \
   --primers /path/to/primers.fasta \
   --fasta /path/to/genome.fasta \
@@ -260,7 +260,7 @@ if (params.entrypoint == "lima") {
 - `modules/local/picard/filename/main.nf`: 自定义本地模块，用于重命名 Picard 拆分后的 BAM 文件。
 
 **配置和文档文件**
-- `samplesheets/samplesheet_lima_entrypoint.csv`: 测试用的 samplesheet 示例。
+- `samplesheets/test_lima_entrypoint.csv`: 测试用的 samplesheet 示例。
 - `LIMA_ENTRYPOINT_SUMMARY_CN.md` (本文档): 功能总结与使用指南。
 
 ### 2. 修改的文件

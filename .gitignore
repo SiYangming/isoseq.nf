@@ -4,11 +4,8 @@ work/
 data/
 results/
 .DS_Store
-testing/
 testing*
 *.pyc
 .idea/
 .vscode
-/nextflow_work
-/testdata_results
 /null
