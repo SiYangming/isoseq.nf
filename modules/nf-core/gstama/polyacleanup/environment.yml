@@ -4,4 +4,4 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - bioconda::gs-tama=1.0.3
+  - yangmingsi::gs-tama==1.0.4
