@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MappingTable>
+  <Mapping>
+    <SequencingChemistry>S/P2-C2/5.0</SequencingChemistry>
+    <BindingKit>100-862-200</BindingKit>
+    <SequencingKit>100-861-800</SequencingKit>
+    <SoftwareVersion>4.0</SoftwareVersion>
+  </Mapping>
+</MappingTable>

@@ -112,6 +112,36 @@ nextflow run main.nf \
 
 > 大基因组也可以使用 `-profile server -c conf/large_genome.config` 叠加。
 
+#### Medicago truncatula / 旧版 SMRT Analysis 4.0 subreads
+
+该批 `SRR7217321` / `SRR7217322` subreads 的 BAM 头部为
+`BASECALLERVERSION=4.0.0.189308`，默认 ccs 6.4 会报
+`chemistry compatibility ERROR`。当前使用
+`conf/pbccs_SRR7217321_2.config` 与
+`conf/pbccs-chem-bundle/chemistry.xml`，将
+`100-862-200 / 100-861-800 / 4.0` 映射到 `S/P2-C2/5.0`。
+
+这是最小兼容覆盖，不会修改 BAM/PBI，也不会固定旧版 ccs。此类非 barcoded
+Iso-Seq 数据应使用 `REV-Kinnex-ISO/primers.fasta`，不要使用 Kinnex
+barcoded primers。两个 SRA 使用不同 sample 名，避免
+`GSTAMA_FILELIST` 发生输入文件重名冲突。
+
+```bash
+screen -S isoseq_Medicago
+conda activate nextflow
+cd /data1/users/siyangming/FLTranslatORF/isoseq.nf/
+
+nextflow run main.nf \
+  -profile server,docker \
+  -c conf/pbccs_SRR7217321_2.config \
+  --input samplesheets/Medicago_truncatula.csv \
+  --genome Medicago_truncatula \
+  --entrypoint isoseq \
+  --aligner ultra \
+  --primers primers/REV-Kinnex-ISO/primers.fasta \
+  --outdir /data1/users/siyangming/FLTranslatORF/flcdna_results/Medicago_truncatula
+```
+
 ### 4.2 从 CCS BAM 启动 (`entrypoint=lima`)
 
 适用于已有 CCS BAM 数据的场景：
@@ -321,6 +351,7 @@ rm -rf /data1/users/siyangming/isoseq_results/<species>/work
   - `REV-Kinnex-ISO/primers.fasta`
   - `Kinnex-full-length-RNA/REF-primers/IsoSeq_v2_primers_12.fasta`
   - `Kinnex-full-length-RNA/MAS_adapters/MAS-Seq_Adapter_v{1,2,3}/mas{16,12,8}_primers.fasta`
+- **旧 SMRT Analysis 4.0 subreads**：当 ccs 6.4 报 `chemistry compatibility ERROR` 时，使用 `-c conf/pbccs_SRR7217321_2.config`。该配置只设置 `SMRT_CHEMISTRY_BUNDLE_DIR`，映射文件为 `conf/pbccs-chem-bundle/chemistry.xml`。
 - **entrypoint 选择**：
   - `isoseq`：subreads → ccs → lima → refine → collapse → merge（最完整）
   - `lima`：ccs.bam → lima → refine → collapse → merge（跳过 CCS）
@@ -337,3 +368,6 @@ rm -rf /data1/users/siyangming/isoseq_results/<species>/work
 | `OutOfMemoryError` on `MINIMAP2_ALIGN` / `ULTRA_*` | 大基因组未启用 `large_genome.config` | 使用 `-profile server_large_genome` 或添加 `-c conf/large_genome.config` |
 | `Docker permission denied` | 当前用户不在 docker 组 | `sudo usermod -aG docker $USER`，重新登录 |
 | `Channel.fromSamplesheet` 报错 | 旧 `nf-validation` 残留 | 确认 `nextflow.config` 中 `plugins { id 'nf-schema@2.7.2' }` |
+| `chemistry compatibility ERROR: unsupported sequencing chemistry combination` | 旧 BAM 头部 basecaller 为 4.0 | 添加 `-c conf/pbccs_SRR7217321_2.config` |
+| `GSTAMA_FILELIST input file name collision` | 多个 BAM 使用相同 sample 名 | 每个 BAM 使用唯一 sample 名 |
+| `Could not find matching barcodes` | 非 barcoded Iso-Seq 使用了 Kinnex barcoded primers | 改用 `--primers primers/REV-Kinnex-ISO/primers.fasta` |
