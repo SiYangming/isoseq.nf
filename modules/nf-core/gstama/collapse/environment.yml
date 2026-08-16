@@ -1,7 +1,7 @@
 name: GSTAMA_COLLAPSE
 channels:
+  - YangmingSi
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
-  - yangmingsi::gs-tama==1.0.4
+  - gs-tama==1.0.4
