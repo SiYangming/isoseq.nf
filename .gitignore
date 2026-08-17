@@ -2,7 +2,7 @@ assets/long_reads.fa.gz
 .nextflow*
 work/
 data/
-results/
+results*
 .DS_Store
 testing*
 *.pyc
