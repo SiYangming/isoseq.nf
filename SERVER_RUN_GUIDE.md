@@ -189,7 +189,7 @@ nextflow run main.nf \
 
 ```bash
 nextflow run main.nf \
-    --input samplesheets/samplesheet.csv \
+    --input samplesheets/test_online.csv \
     --fasta /data1/users/siyangming/PublicDB/reference/Custom_species/Custom_species.v1.dna.fa.gz \
     --gtf /data1/users/siyangming/PublicDB/reference/Custom_species/Custom_species.v1.63.gtf.gz \
     --entrypoint isoseq \

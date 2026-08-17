@@ -49,7 +49,7 @@ sample1,None,None,sample1.fa.gz
 sample2,None,None,sample2.fa.gz
 ```
 
-An [example samplesheet](../samplesheets/samplesheet.csv) has been provided with the pipeline.
+An [example samplesheet](../samplesheets/test_online.csv) has been provided with the pipeline.
 
 ### Primer file
 

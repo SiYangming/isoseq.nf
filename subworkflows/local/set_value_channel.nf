@@ -11,17 +11,8 @@ workflow SET_VALUE_CHANNEL {
     main:
     if (infile =~ /.gz$/) {
         GUNZIP([[], file(infile)])
-            .gunzip
-            .map { it[1] }
-            .set { data }
     }
-    else {
-        Channel // Prepare value channel
-            .value(file(infile))
-            .set { data }
-    }
-
 
     emit:
-    data // channel: [ file(infile) ]
+    infile =~ /.gz$/ ? GUNZIP.out.gunzip.map { pair -> pair[1] } : channel.value(file(infile))
 }

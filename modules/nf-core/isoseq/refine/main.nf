@@ -41,8 +41,6 @@ process ISOSEQ_REFINE {
     """
 
     stub:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch dummy.bam
     touch dummy.bam.pbi

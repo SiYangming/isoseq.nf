@@ -37,6 +37,9 @@ include { SET_VALUE_CHANNEL as SET_PRIMERS_CHANNEL } from '../subworkflows/local
 //
 include { GSTAMA_FILELIST } from '../modules/local/gstama/filelist/main'
 include { PICARD_FILENAME }  from '../modules/local/picard/filename/main'
+include { FLAIR_ALIGN    } from '../modules/local/flair/align/main'
+include { FLAIR_CORRECT  } from '../modules/local/flair/correct/main'
+include { FLAIR_COLLAPSE } from '../modules/local/flair/collapse/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -81,7 +84,6 @@ workflow ISOSEQ {
     def ch_multiqc_config = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
     def ch_multiqc_custom_config = params.multiqc_config ? channel.fromPath(params.multiqc_config, checkIfExists: true) : channel.empty()
     def ch_multiqc_logo = params.multiqc_logo ? channel.fromPath(params.multiqc_logo, checkIfExists: true) : channel.empty()
-    def ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
 
     //
     // SET UP VERSIONS CHANNELS
@@ -96,7 +98,7 @@ workflow ISOSEQ {
                                         // Prepare channels for:
     SET_FASTA_CHANNEL(params.fasta)     // - genome fasta
     SET_PRIMERS_CHANNEL(params.primers) // - primers fasta
-    if (params.aligner == "ultra") {
+    if (params.aligner == "ultra" || params.entrypoint == "flair") {
         SET_GTF_CHANNEL(params.gtf)     // - genome gtf
     }
 
@@ -108,11 +110,11 @@ workflow ISOSEQ {
 
         PBCCS(ch_samplesheet, SET_CHUNK_NUM_CHANNEL.out.chunk_num, params.chunk) // Generate CCS from raw reads
         PBCCS.out.bam // Update meta: update id (+chunkX) and store former id
-        .map {
-            def chk       = (it[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
-            def id_former = it[0].id
-            def id_new    = it[0].id + "." + chk
-            return [ [id:id_new, id_former:id_former, single_end:true], it[1] ]
+        .map { pair ->
+            def chk       = (pair[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
+            def id_former = pair[0].id
+            def id_new    = pair[0].id + "." + chk
+            return [ [id:id_new, id_former:id_former, single_end:true], pair[1] ]
         }
         .set { ch_pbccs_bam_updated }
 
@@ -140,8 +142,8 @@ workflow ISOSEQ {
         PICARD_SPLITSAMBYNUMBEROFREADS(
             ch_samplesheet,                  // Input: BAM files
             [ [:], [], [] ],                 // No reference needed
-            Channel.value(0),                // split_to_N_reads (not used)
-            Channel.value(params.chunk),     // split_to_N_files
+            channel.value(0),                // split_to_N_reads (not used)
+            channel.value(params.chunk),     // split_to_N_files
             []                               // No arguments file
         )
 
@@ -151,11 +153,11 @@ workflow ISOSEQ {
         // Flatten the renamed BAM files and update meta
         PICARD_FILENAME.out.bam
             .transpose()
-            .map {
-                def chk       = (it[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
-                def id_former = it[0].id
-                def id_new    = it[0].id + "." + chk
-                return [ [id:id_new, id_former:id_former, single_end:true], it[1] ]
+            .map { pair ->
+                def chk       = (pair[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
+                def id_former = pair[0].id
+                def id_new    = pair[0].id + "." + chk
+                return [ [id:id_new, id_former:id_former, single_end:true], pair[1] ]
             }
             .set { ch_picard_filename_bam_updated }
     }
@@ -203,6 +205,26 @@ workflow ISOSEQ {
     }
 
 
+// FLAIR pipeline entrypoint ################################################################
+    if (params.entrypoint == "flair") {
+        // 输入：全长转录本 reads（fastq/fasta，samplesheet reads 列）+ genome fasta + gtf
+        // 流程：flair align -> correct -> collapse，不经过 gstama
+        FLAIR_ALIGN(
+            ch_samplesheet,
+            SET_FASTA_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] }
+        )
+        FLAIR_CORRECT(
+            FLAIR_ALIGN.out.bed,
+            SET_GTF_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] }
+        )
+        FLAIR_COLLAPSE(
+            ch_samplesheet,
+            FLAIR_CORRECT.out.bed,
+            SET_FASTA_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] },
+            SET_GTF_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] }
+        )
+    }
+
 // MAP pipeline entrypoint ##################################################################
     if ( [ 'isoseq', 'lima', 'isoseq3_refine', 'bamtools_convert' ].contains(params.entrypoint) ) {
         ch_reads_to_map = GSTAMA_POLYACLEANUP.out.fasta
@@ -212,42 +234,46 @@ workflow ISOSEQ {
     }
 
 
-    // Align FLNCs: User can choose between minimap2 and uLTRA aligners
-    if (params.aligner == "ultra") {
-        GNU_SORT(SET_GTF_CHANNEL.out.data.map { it -> [ [id:'genome'], it ]  } )          // Sort GTF on sequence and start, uLTRA index fails with topological sort
-        ULTRA_INDEX(SET_FASTA_CHANNEL.out.data, GNU_SORT.out.sorted.map { it[1] })        // Index GTF file before alignment
-        GUNZIP(ch_reads_to_map)                                                           // uncompress fastas (gz not supported by uLTRA)
-        ULTRA_ALIGN(GUNZIP.out.gunzip, SET_FASTA_CHANNEL.out.data, ULTRA_INDEX.out.index) // Align read against genome
-        GSTAMA_COLLAPSE(ULTRA_ALIGN.out.bam, SET_FASTA_CHANNEL.out.data)                  // Clean gene models
+    // Align FLNCs: User can choose between minimap2 and uLTRA aligners (not used by the flair entrypoint)
+    if (params.entrypoint != "flair") {
+        if (params.aligner == "ultra") {
+            GNU_SORT(SET_GTF_CHANNEL.out.data.map { file -> [ [id:'genome'], file ]  } )          // Sort GTF on sequence and start, uLTRA index fails with topological sort
+            ULTRA_INDEX(SET_FASTA_CHANNEL.out.data, GNU_SORT.out.sorted.map { pair -> pair[1] })        // Index GTF file before alignment
+            GUNZIP(ch_reads_to_map)                                                           // uncompress fastas (gz not supported by uLTRA)
+            ULTRA_ALIGN(GUNZIP.out.gunzip, SET_FASTA_CHANNEL.out.data, ULTRA_INDEX.out.index) // Align read against genome
+            GSTAMA_COLLAPSE(ULTRA_ALIGN.out.bam, SET_FASTA_CHANNEL.out.data)                  // Clean gene models
+        }
+        else if (params.aligner == "minimap2") {
+            MINIMAP2_ALIGN(                    // Align read against genome
+                ch_reads_to_map,
+                [ [id:"Dummy"], file(params.fasta) ],
+                channel.value(true),
+                channel.value("bai"),
+                channel.value(false),
+                channel.value(false))
+            GSTAMA_COLLAPSE(MINIMAP2_ALIGN.out.bam, SET_FASTA_CHANNEL.out.data) // Clean gene models
+        }
     }
-    else if (params.aligner == "minimap2") {
-        MINIMAP2_ALIGN(                    // Align read against genome
-            ch_reads_to_map,
-            [ [id:"Dummy"], file(params.fasta) ],
-            Channel.value(true),
-            Channel.value("bai"),
-            Channel.value(false),
-            Channel.value(false))
-        GSTAMA_COLLAPSE(MINIMAP2_ALIGN.out.bam, SET_FASTA_CHANNEL.out.data) // Clean gene models
+
+    if (params.entrypoint != "flair") {
+        GSTAMA_COLLAPSE.out.bed // replace id with the former sample id and group files by sample
+            .map { pair -> [ [id:pair[0].id_former], pair[1] ] }
+            .groupTuple()
+            .set { ch_tcollapse }
+
+        cap_value = params.capped == true ? channel.value("capped") : channel.value("no_cap")
+
+        GSTAMA_FILELIST( // Generate the filelist file needed by TAMA merge
+        ch_tcollapse,
+        cap_value,
+        channel.value("1,1,1"))
+
+        ch_tcollapse // Synchronized bed files produced by TAMA collapse with file list file generated by GSTAMA_FILELIST
+            .join( GSTAMA_FILELIST.out.tsv )
+            .set { ch_tmerge_in }
+
+        GSTAMA_MERGE(ch_tmerge_in.map { pair -> [ pair[0], pair[1] ] }, ch_tmerge_in.map { pair -> pair[2] }) // Merge all bed files from one sample into a uniq bed file
     }
-
-    GSTAMA_COLLAPSE.out.bed // replace id with the former sample id and group files by sample
-        .map { [ [id:it[0].id_former], it[1] ] }
-        .groupTuple()
-        .set { ch_tcollapse }
-
-    cap_value = params.capped == true ? Channel.value("capped") : Channel.value("no_cap")
-
-    GSTAMA_FILELIST( // Generate the filelist file needed by TAMA merge
-    ch_tcollapse,
-    cap_value,
-    Channel.value("1,1,1"))
-
-    ch_tcollapse // Synchronized bed files produced by TAMA collapse with file list file generated by GSTAMA_FILELIST
-        .join( GSTAMA_FILELIST.out.tsv )
-        .set { ch_tmerge_in }
-
-    GSTAMA_MERGE(ch_tmerge_in.map { [ it[0], it[1] ] }, ch_tmerge_in.map { it[2] }) // Merge all bed files from one sample into a uniq bed file
 
 
     //
@@ -285,17 +311,19 @@ workflow ISOSEQ {
         ch_versions = ch_versions.mix(GSTAMA_POLYACLEANUP.out.versions)
     }
 
-    if (params.aligner == "ultra") {
-        ch_versions = ch_versions.mix(GNU_SORT.out.versions)
-        ch_versions = ch_versions.mix(ULTRA_INDEX.out.versions)
-        ch_versions = ch_versions.mix(ULTRA_ALIGN.out.versions)
-    }
-    else if (params.aligner == "minimap2") {
-        ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
-    }
+    if (params.entrypoint != "flair") {
+        if (params.aligner == "ultra") {
+            ch_versions = ch_versions.mix(GNU_SORT.out.versions)
+            ch_versions = ch_versions.mix(ULTRA_INDEX.out.versions)
+            ch_versions = ch_versions.mix(ULTRA_ALIGN.out.versions)
+        }
+        else if (params.aligner == "minimap2") {
+            ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
+        }
 
-    ch_versions = ch_versions.mix(GSTAMA_COLLAPSE.out.versions)
-    ch_versions = ch_versions.mix(GSTAMA_MERGE.out.versions)
+        ch_versions = ch_versions.mix(GSTAMA_COLLAPSE.out.versions)
+        ch_versions = ch_versions.mix(GSTAMA_MERGE.out.versions)
+    }
 
     //
     // MODULE: CUSTOM_DUMPSOFTWAREVERSIONS
@@ -308,31 +336,31 @@ workflow ISOSEQ {
     //
     // MODULE: MultiQC
     //
-    ch_multiqc_config        = Channel.fromPath(
+    ch_multiqc_config        = channel.fromPath(
         "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
     ch_multiqc_custom_config = params.multiqc_config ?
-        Channel.fromPath(params.multiqc_config, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_config, checkIfExists: true) :
+        channel.empty()
     ch_multiqc_logo          = params.multiqc_logo ?
-        Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_logo, checkIfExists: true) :
+        channel.empty()
 
     summary_params      = paramsSummaryMap(
         workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
+    ch_workflow_summary = channel.value(paramsSummaryMultiqc(summary_params))
 
-    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = channel.empty()
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     // ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
     if (params.entrypoint == "isoseq") {
-        ch_multiqc_files = ch_multiqc_files.mix(PBCCS.out.report_json.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.summary.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.counts.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(PBCCS.out.report_json.collect{ pair -> pair[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.summary.collect{ pair -> pair[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.counts.collect{ pair -> pair[1]}.ifEmpty([]))
     }
 
     if (params.entrypoint == "lima") {
-        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.summary.collect{it[1]}.ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.counts.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.summary.collect{ pair -> pair[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(LIMA.out.counts.collect{ pair -> pair[1]}.ifEmpty([]))
     }
 
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())

@@ -44,8 +44,6 @@ process PBCCS {
     """
 
     stub:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch dummy.chunk1.bam
     touch dummy.chunk1.bam.pbi

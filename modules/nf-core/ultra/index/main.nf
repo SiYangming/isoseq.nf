@@ -20,7 +20,6 @@ process ULTRA_INDEX {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${gtf.baseName}"
     """
     uLTRA \\
         index \\

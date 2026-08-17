@@ -28,8 +28,8 @@
             "reads": {
                 "type": "string",
                 "format": "file-path",
-                "pattern": "(^\\S+\\.fa\\.gz$|^None$)",
-                "errorMessage": "Long reads file cannot contain spaces and must have extension '.fa.gz' or being 'None' if the entrypoint is 'isoseq'"
+                "pattern": "(^\\S+\\.(fa\\.gz|fastq\\.gz|fq\\.gz|fa|fasta|fastq|fq)$|^None$)",
+                "errorMessage": "Long reads file cannot contain spaces and must have a valid FASTA/FASTQ extension (.fa.gz/.fastq.gz/.fq.gz/.fa/.fasta/.fastq/.fq) or be 'None'"
             }
         },
         "required": ["sample"]

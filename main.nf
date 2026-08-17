@@ -57,7 +57,7 @@ workflow NFCORE_ISOSEQ {
     )
 
     emit:
-    multiqc_report = ISOSEQ.out.multiqc_report // channel: /path/to/multiqc_report.html
+    ISOSEQ.out.multiqc_report // channel: /path/to/multiqc_report.html
 
 }
 /*
@@ -100,7 +100,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        NFCORE_ISOSEQ.out.multiqc_report
+        NFCORE_ISOSEQ.out
     )
 }
 

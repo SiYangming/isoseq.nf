@@ -35,11 +35,11 @@ workflow PIPELINE_INITIALISATION {
     monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args //   array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
-    input             //  string: Path to input samplesheet
+    _input            //  string: Path to input samplesheet (handled via params.input)
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Print version and exit if required and dump pipeline parameters to JSON file
@@ -81,40 +81,47 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
     if (params.entrypoint == "isoseq") {
-        Channel
+        channel
             .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
-            .flatMap { create_pbccs_channel(it, params.chunk) }
+            .flatMap { row -> create_pbccs_channel(row, params.chunk) }
             .set { ch_samplesheet }
     }
 
     if ( [ 'lima', 'isoseq3_refine', 'bamtools_convert' ].contains(params.entrypoint) ) {
-        Channel
+        channel
             .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
-            .map {
-                if (!file(it[1]).exists()) {
-                    exit 1, "ERROR: Please check input samplesheet -> BAM file does not exist!\n${it[1]}"
+            .map { row ->
+                if (!file(row[1]).exists()) {
+                    exit 1, "ERROR: Please check input samplesheet -> BAM file does not exist!\n${row[1]}"
                 }
-                [ it[0], file(it[1]) ]
+                [ row[0], file(row[1]) ]
             }
             .set { ch_samplesheet }
     }
 
     if (params.entrypoint == "map") {
-        Channel
+        channel
             .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
-            .flatMap { create_reads_channel(it) }
+            .flatMap { row -> create_reads_channel(row) }
             .splitFasta(
                 by: params.chunk,
                 decompress: true,
                 file: "chunk",
                 compress: true
             )
-            .map {
-                def chk = (it[1] =~ /(chunk\.\d+)\.gz/)[ 0 ][ 1 ]
-                def id_former = it[0].id
-                def id_new    = it[0].id + "." + chk
-                [ [ id:id_new, id_former:id_former ] , it[1] ]
+            .map { row ->
+                def chk = (row[1] =~ /(chunk\.\d+)\.gz/)[ 0 ][ 1 ]
+                def id_former = row[0].id
+                def id_new    = row[0].id + "." + chk
+                [ [ id:id_new, id_former:id_former ] , row[1] ]
             }
+            .set { ch_samplesheet }
+    }
+
+    if (params.entrypoint == "flair") {
+        channel
+            .fromList(samplesheetToList(params.input, "assets/schema_input.json"))
+            .flatMap { row -> create_reads_channel(row) }
             .set { ch_samplesheet }
     }
 
@@ -183,7 +190,7 @@ def validateInputSamplesheet(input) {
     def (metas, fastqs) = input[1..2]
 
     // Check that multiple runs of the same sample are of the same datatype i.e. single-end / paired-end
-    def endedness_ok = metas.collect{ it.single_end }.unique().size == 1
+    def endedness_ok = metas.collect{ m -> m.single_end }.unique().size == 1
     if (!endedness_ok) {
         error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
     }
@@ -294,9 +301,7 @@ def create_pbccs_channel(row, chunk) {
     }
 
     // Create array with chunk entries using collect()
-    def array = (1..chunk).collect { i ->
-        [ row[0], file(row[1]), file(row[2]) ]
-    }
+    def array = (1..chunk).collect { [ row[0], file(row[1]), file(row[2]) ] }
 
     return array
 }

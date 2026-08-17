@@ -10,7 +10,16 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir", "primers"],
+            "required": ["input", "outdir"],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": { "entrypoint": { "const": "flair" } }
+                    },
+                    "then": { "required": [] },
+                    "else": { "required": ["primers"] }
+                }
+            ],
             "properties": {
                 "input": {
                     "type": "string",
@@ -45,9 +54,9 @@
                     "type": "string",
                     "fa_icon": "fas fa-dungeon",
                     "description": "Run complete pipeline, start from LIMA, or TAMA only?",
-                    "enum": ["isoseq", "lima", "isoseq3_refine", "bamtools_convert", "map"],
+                    "enum": ["isoseq", "lima", "isoseq3_refine", "bamtools_convert", "map", "flair"],
                     "default": "isoseq",
-                    "help_text": "Choose the pipeline entry point:\n- 'isoseq' (default): Full pipeline starting from subreads (PBCCS -> LIMA -> ISOSEQ_REFINE -> mapping -> TAMA)\n- 'lima': Start from BAM, split with Picard, then run LIMA -> ISOSEQ_REFINE -> mapping -> TAMA\n- 'isoseq3_refine': Start from BAM, split with Picard, then run ISOSEQ_REFINE -> mapping -> TAMA\n- 'bamtools_convert': Start from BAM, split with Picard, then run BAMTOOLS_CONVERT -> mapping -> TAMA\n- 'map': Start from the mapping step to take advantage of TAMA processing only"
+                    "help_text": "Choose the pipeline entry point:\n- 'isoseq' (default): Full pipeline starting from subreads (PBCCS -> LIMA -> ISOSEQ_REFINE -> mapping -> TAMA)\n- 'lima': Start from BAM, split with Picard, then run LIMA -> ISOSEQ_REFINE -> mapping -> TAMA\n- 'isoseq3_refine': Start from BAM, split with Picard, then run ISOSEQ_REFINE -> mapping -> TAMA\n- 'bamtools_convert': Start from BAM, split with Picard, then run BAMTOOLS_CONVERT -> mapping -> TAMA\n- 'map': Start from the mapping step to take advantage of TAMA processing only\n- 'flair': Start from full-length transcript reads (FASTQ/FASTA in the samplesheet 'reads' column) and run FLAIR align -> correct -> collapse for isoform analysis (supports both ONT and PacBio reads)"
                 },
                 "chunk": {
                     "type": "integer",

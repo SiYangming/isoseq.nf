@@ -10,10 +10,7 @@ workflow SET_CHUNK_NUM_CHANNEL {
     main:
     int n_samples = file(samplesheet).readLines().size() - 1
 
-    Channel // Prepare the pbccs chunk_num channel
-        .from((1..chunk).step(1).toList()*n_samples)
-        .set { chunk_num }
-
     emit:
-    chunk_num
+    channel // Prepare the pbccs chunk_num channel
+        .from((1..chunk).step(1).toList()*n_samples)
 }

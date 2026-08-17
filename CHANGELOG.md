@@ -3,6 +3,28 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.1.1 - [2026-08-17]
+
+### Enhancements & fixes
+
+- **Lint 修复**: 解决全部 `nextflow lint` 警告（90 → 0）：`Channel` 工厂统一改为小写 `channel`，隐式闭包参数 `it` 全部显式化，单 emit 名称省略（`main.nf` 与各 subworkflow），未使用变量删除（模块 stub 块、`workflows/isoseq.nf` 未用 `ch_multiqc_custom_methods_description`），`catch (all)` 改用具名参数并实际使用，`take` 未用参数 `_input` 前缀。
+- **样本表重命名**: `samplesheets/samplesheet.csv` 重命名为 `test_online.csv`（在线 alz 测试数据），`samplesheets/samplesheet_T6.csv` 重命名为 `T6.csv`；同步更新 `conf/server.config`、`conf/large_genome.config`、`scripts/run_T6.sh`、`docs/usage.md`、`SERVER_RUN_GUIDE.md` 中的引用。
+- **T6 数据集配置整合**: 删除独立的 `conf/T6.config` 与 `T6` profile，T6 数据集改为通过 `server` profile + 命令行参数运行（`--genome Oryza_sativa --input samplesheets/T6.csv --aligner ultra --entrypoint isoseq3_refine ...`），与 `circdna.nf`/`fetchngs.nf` 的 server 配置约定一致。
+- **运行脚本**: 更新 `scripts/run_T6.sh`（改为 server profile + CLI 参数模式）与 `scripts/run_td2.sh`（TD2 ORF 预测下游脚本）。
+
+## 3.1.0 - [2026-08-16]
+
+### Enhancements & fixes
+
+- **New Entrypoint `flair`**: 从 `bio.nf` 整合 FLAIR 全长转录本分析流程（`flair align` -> `correct` -> `collapse`），支持以 fastq/fasta 全长转录本 reads 直接启动，兼容 ONT 与 PacBio（覆盖 NCBI 仅提供 fastq 而无法走 `isoseq3 refine` 的 Iso-Seq 数据场景）。
+- **测试数据**: 新增 `testdata/alz.isoseq_refine.fastq`，由 `testdata/alz.isoseq_refine.bam` 转换（2918 条 FLNC reads），用于 `flair` entrypoint 测试。
+- **模块收归**: `flair`、`longshot`、`minimap2/align`（nf-core 标准版）及子流程 `flair_pipeline`、`minimap2_longshot_flair` 已从 `bio.nf` 迁入 `nanoseq.nf/modules/local` 统一管理；`bio.nf` 不再作为第三方模块中转站（AGENTS.md 第 12 节）。
+
+### `Added`
+
+- 新增 `conf/test_flair_entrypoint.config` 与 `samplesheets/test_flair_entrypoint.csv` 测试配置。
+- `nextflow_schema.json` `entrypoint` 枚举新增 `flair`。
+
 ## 3.0.1 - [2026-07-28]
 
 ### Enhancements & fixes

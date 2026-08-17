@@ -69,8 +69,6 @@ process LIMA {
     """
 
     stub:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch dummy.counts
     touch dummy.report
