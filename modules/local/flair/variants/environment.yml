@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::flair=3.0.0
+  - bioconda::flair=3.0.1
   - bioconductor-deseq2
   - bioconductor-drimseq
   - bioconductor-stager

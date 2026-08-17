@@ -103,7 +103,7 @@
                     [
                         "FLAIR_TRANSCRIPTOME",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ],
                 "isoforms_bed": [
@@ -134,7 +134,7 @@
                     [
                         "FLAIR_TRANSCRIPTOME",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ]
             }
@@ -176,7 +176,7 @@
                     [
                         "FLAIR_TRANSCRIPTOME",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ],
                 "isoforms_bed": [
@@ -207,7 +207,7 @@
                     [
                         "FLAIR_TRANSCRIPTOME",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ]
             }

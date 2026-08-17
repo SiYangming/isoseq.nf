@@ -14,7 +14,7 @@
                     [
                         "FLAIR_BAM2BED",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ],
                 "bed": [
@@ -29,7 +29,7 @@
                     [
                         "FLAIR_BAM2BED",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ]
             }

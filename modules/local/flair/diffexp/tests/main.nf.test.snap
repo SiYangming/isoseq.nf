@@ -25,7 +25,7 @@
                     [
                         "FLAIR_DIFFEXP",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ],
                 "deseq2_plots": [
@@ -51,7 +51,7 @@
                     [
                         "FLAIR_DIFFEXP",
                         "flair",
-                        "FLAIR 3.0.0b1"
+                        "FLAIR 3.0.1"
                     ]
                 ]
             }
