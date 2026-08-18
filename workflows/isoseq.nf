@@ -108,7 +108,7 @@ workflow ISOSEQ {
 
         SET_CHUNK_NUM_CHANNEL(params.input, params.chunk) // - PBCCS parallelization
 
-        PBCCS(ch_samplesheet, SET_CHUNK_NUM_CHANNEL.out.chunk_num, params.chunk) // Generate CCS from raw reads
+        PBCCS(ch_samplesheet, SET_CHUNK_NUM_CHANNEL.out, params.chunk) // Generate CCS from raw reads
         PBCCS.out.bam // Update meta: update id (+chunkX) and store former id
         .map { pair ->
             def chk       = (pair[1] =~ /.*\.(chunk\d+)\.bam/)[ 0 ][ 1 ]
@@ -118,7 +118,7 @@ workflow ISOSEQ {
         }
         .set { ch_pbccs_bam_updated }
 
-        LIMA(ch_pbccs_bam_updated, SET_PRIMERS_CHANNEL.out.data)  // Remove primers from CCS
+        LIMA(ch_pbccs_bam_updated, SET_PRIMERS_CHANNEL.out)  // Remove primers from CCS
 
         LIMA.out.bam
             .transpose()
@@ -129,7 +129,7 @@ workflow ISOSEQ {
             }
             .set { ch_lima_bam_transposed }
 
-        ISOSEQ_REFINE(ch_lima_bam_transposed, SET_PRIMERS_CHANNEL.out.data) // Discard CCS without polyA tails, remove it from the other
+        ISOSEQ_REFINE(ch_lima_bam_transposed, SET_PRIMERS_CHANNEL.out) // Discard CCS without polyA tails, remove it from the other
         BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)                   // Convert bam to fasta
         GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)            // Clean polyA tails from reads
     }
@@ -164,7 +164,7 @@ workflow ISOSEQ {
 
     if (params.entrypoint == "lima") {
 
-        LIMA(ch_picard_filename_bam_updated, SET_PRIMERS_CHANNEL.out.data)
+        LIMA(ch_picard_filename_bam_updated, SET_PRIMERS_CHANNEL.out)
 
         LIMA.out.bam
             .transpose()
@@ -175,7 +175,7 @@ workflow ISOSEQ {
             }
             .set { ch_lima_bam_transposed }
 
-        ISOSEQ_REFINE(ch_lima_bam_transposed, SET_PRIMERS_CHANNEL.out.data)  // Discard CCS without polyA tails, remove it from the other
+        ISOSEQ_REFINE(ch_lima_bam_transposed, SET_PRIMERS_CHANNEL.out)  // Discard CCS without polyA tails, remove it from the other
         BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)                    // Convert bam to fasta
         GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)             // Clean polyA tails from reads
     }
@@ -192,7 +192,7 @@ workflow ISOSEQ {
             }
             .set { ch_isoseq_refine_in }
 
-        ISOSEQ_REFINE(ch_isoseq_refine_in, SET_PRIMERS_CHANNEL.out.data)
+        ISOSEQ_REFINE(ch_isoseq_refine_in, SET_PRIMERS_CHANNEL.out)
         BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)
         GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.data)
     }
@@ -211,17 +211,17 @@ workflow ISOSEQ {
         // 流程：flair align -> correct -> collapse，不经过 gstama
         FLAIR_ALIGN(
             ch_samplesheet,
-            SET_FASTA_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] }
+            SET_FASTA_CHANNEL.out.map { file -> [ [id:'genome'], file ] }
         )
         FLAIR_CORRECT(
             FLAIR_ALIGN.out.bed,
-            SET_GTF_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] }
+            SET_GTF_CHANNEL.out.map { file -> [ [id:'genome'], file ] }
         )
         FLAIR_COLLAPSE(
             ch_samplesheet,
             FLAIR_CORRECT.out.bed,
-            SET_FASTA_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] },
-            SET_GTF_CHANNEL.out.data.map { file -> [ [id:'genome'], file ] }
+            SET_FASTA_CHANNEL.out.map { file -> [ [id:'genome'], file ] },
+            SET_GTF_CHANNEL.out.map { file -> [ [id:'genome'], file ] }
         )
     }
 
@@ -237,11 +237,11 @@ workflow ISOSEQ {
     // Align FLNCs: User can choose between minimap2 and uLTRA aligners (not used by the flair entrypoint)
     if (params.entrypoint != "flair") {
         if (params.aligner == "ultra") {
-            GNU_SORT(SET_GTF_CHANNEL.out.data.map { file -> [ [id:'genome'], file ]  } )          // Sort GTF on sequence and start, uLTRA index fails with topological sort
-            ULTRA_INDEX(SET_FASTA_CHANNEL.out.data, GNU_SORT.out.sorted.map { pair -> pair[1] })        // Index GTF file before alignment
+            GNU_SORT(SET_GTF_CHANNEL.out.map { file -> [ [id:'genome'], file ]  } )          // Sort GTF on sequence and start, uLTRA index fails with topological sort
+            ULTRA_INDEX(SET_FASTA_CHANNEL.out, GNU_SORT.out.sorted.map { pair -> pair[1] })        // Index GTF file before alignment
             GUNZIP(ch_reads_to_map)                                                           // uncompress fastas (gz not supported by uLTRA)
-            ULTRA_ALIGN(GUNZIP.out.gunzip, SET_FASTA_CHANNEL.out.data, ULTRA_INDEX.out.index) // Align read against genome
-            GSTAMA_COLLAPSE(ULTRA_ALIGN.out.bam, SET_FASTA_CHANNEL.out.data)                  // Clean gene models
+            ULTRA_ALIGN(GUNZIP.out.gunzip, SET_FASTA_CHANNEL.out, ULTRA_INDEX.out.index) // Align read against genome
+            GSTAMA_COLLAPSE(ULTRA_ALIGN.out.bam, SET_FASTA_CHANNEL.out)                  // Clean gene models
         }
         else if (params.aligner == "minimap2") {
             MINIMAP2_ALIGN(                    // Align read against genome
@@ -251,7 +251,7 @@ workflow ISOSEQ {
                 channel.value("bai"),
                 channel.value(false),
                 channel.value(false))
-            GSTAMA_COLLAPSE(MINIMAP2_ALIGN.out.bam, SET_FASTA_CHANNEL.out.data) // Clean gene models
+            GSTAMA_COLLAPSE(MINIMAP2_ALIGN.out.bam, SET_FASTA_CHANNEL.out) // Clean gene models
         }
     }
 
