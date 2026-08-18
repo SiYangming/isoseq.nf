@@ -14,5 +14,5 @@ workflow SET_VALUE_CHANNEL {
     }
 
     emit:
-    infile =~ /.gz$/ ? GUNZIP.out.gunzip.map { pair -> pair[1] } : channel.value(file(infile))
+    data = infile =~ /.gz$/ ? GUNZIP.out.gunzip.map { pair -> pair[1] } : channel.value(file(infile))
 }
