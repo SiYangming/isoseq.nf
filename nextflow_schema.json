@@ -44,6 +44,22 @@
                     "description": "Fasta file of primers sequences",
                     "help_text": "The provided file must contains all primers sequences used for sequencing. \nGziped files are accepted. "
                 },
+                "primers_base_path": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "fa_icon": "fas fa-grip-lines",
+                    "description": "Base path for primer files.",
+                    "hidden": true,
+                    "help_text": "Root directory containing the pipeline's bundled primer files. Used by `conf/server.config` to construct the default `--primers` path."
+                },
+                "bam_base_path": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "fa_icon": "fas fa-file-alt",
+                    "description": "Base path for subreads / CCS BAM files.",
+                    "hidden": true,
+                    "help_text": "Conventional root directory for input BAM files on the server. Actual input paths are given by `--input` samplesheet."
+                },
                 "gtf": {
                     "type": "string",
                     "fa_icon": "fas fa-stream",
@@ -219,6 +235,14 @@
                     "default": "s3://ngi-igenomes/igenomes/",
                     "hidden": true,
                     "help_text": "The base path used by `igenomes.config` to construct reference genome paths for all configured species."
+                },
+                "fasta_base_path": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Base path for reference genome FASTA files.",
+                    "hidden": true,
+                    "help_text": "Root directory containing per-species reference genome folders. Used by `conf/server.config` `params.genomes{}` to construct reference genome paths."
                 }
             }
         },
